@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:padding="4dp" >
+
+    <RadioGroup
+        android:id="@+id/RadioGroup_mode"
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent" 
+        android:orientation="horizontal" >
+
+        <RadioButton 
+            android:id="@+id/RadioButton_mode_echo"
+            android:text="Echoback"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content" />
+
+        <RadioButton 
+            android:id="@+id/RadioButton_mode_tester"
+            android:text="Tester"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content" />
+
+    </RadioGroup>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="4dp" >
+
+        <Button
+            android:id="@+id/Button_start"
+            android:text="Start" 
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/Button_stop"
+            android:text="Stop" 
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/Button_reset"
+            android:text="Reset" 
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+			            
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/ListView_recv"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:transcriptMode="alwaysScroll" />
+ 
+</LinearLayout>
