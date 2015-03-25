@@ -187,34 +187,6 @@ public class MainActivity extends BluetoothChat {
     }
 
     /**
-     * setTtileNotConnected (override)
-     */
-    protected void setTtileConnected() {
-        String str = getString( R.string.app_name ) + " ";
-        str += getString( R.string.title_connected_to );
-        str += mConnectedDeviceName;
-        setTitle( str );
-    }
-
-    /**
-     * setTtileNotConnecting (override)
-     */
-    protected void setTtileConnecting() {
-        String str = getString( R.string.app_name ) + " ";
-        str += getString( R.string.title_connecting );
-        setTitle( str );
-    }
-
-    /**
-     * setTtileNotConnected (override)
-     */
-    protected void setTtileNotConnected() {
-        String str = getString( R.string.app_name ) + " ";
-        str += getString( R.string.title_not_connected );
-        setTitle( str );
-    }
-
-    /**
      * execRead (override)
      * @param Message msg
      */

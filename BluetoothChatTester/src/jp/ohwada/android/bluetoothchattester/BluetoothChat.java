@@ -17,6 +17,7 @@
 package jp.ohwada.android.bluetoothchattester;
 //package com.example.android.BluetoothChat;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -60,29 +61,28 @@ public class BluetoothChat extends Activity {
     public static final String TOAST = "toast";
 
     // Intent request codes
-    private static final int REQUEST_CONNECT_DEVICE = 1;
-    private static final int REQUEST_ENABLE_BT = 2;
+    private static final int REQUEST_CONNECT_DEVICE_SECURE = 1;
+    private static final int REQUEST_CONNECT_DEVICE_INSECURE = 2;
+    private static final int REQUEST_ENABLE_BT = 3;
 
     // Layout Views
-    private TextView mTitle;
     private ListView mConversationView;
     private EditText mOutEditText;
     private Button mSendButton;
-    
+
     // Name of the connected device
     protected String mConnectedDeviceName = null;
 //    private String mConnectedDeviceName = null;
 
     // Array adapter for the conversation thread
     private ArrayAdapter<String> mConversationArrayAdapter;
-
     // String buffer for outgoing messages
     private StringBuffer mOutStringBuffer;
- 
+
     // Local Bluetooth adapter
     protected BluetoothAdapter mBluetoothAdapter = null;
 //    private BluetoothAdapter mBluetoothAdapter = null;
-    
+
     // Member object for the chat services
     protected BluetoothChatService mChatService = null;
 //    private BluetoothChatService mChatService = null;
@@ -92,17 +92,10 @@ public class BluetoothChat extends Activity {
 //    public void onCreate(Bundle savedInstanceState) {
 //        super.onCreate(savedInstanceState);
 
-    	if(D) Log.e(TAG, "+++ ON CREATE +++");
+        if(D) Log.e(TAG, "+++ ON CREATE +++");
 
         // Set up the window layout
-        requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
         setContentView(R.layout.main);
-        getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.custom_title);
-
-        // Set up the custom title
-        mTitle = (TextView) findViewById(R.id.title_left_text);
-        mTitle.setText(R.string.app_name);
-        mTitle = (TextView) findViewById(R.id.title_right_text);
 
         // Get local Bluetooth adapter
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -247,6 +240,16 @@ public class BluetoothChat extends Activity {
         }
     };
 
+    private final void setStatus(int resId) {
+        final ActionBar actionBar = getActionBar();
+        actionBar.setSubtitle(resId);
+    }
+
+    private final void setStatus(CharSequence subTitle) {
+        final ActionBar actionBar = getActionBar();
+        actionBar.setSubtitle(subTitle);
+    }
+
     // The Handler that gets information back from the BluetoothChatService
     protected final Handler mHandler = new Handler() {
 //    private final Handler mHandler = new Handler() {
@@ -257,32 +260,28 @@ public class BluetoothChat extends Activity {
             case MESSAGE_STATE_CHANGE:
                 if(D) Log.i(TAG, "MESSAGE_STATE_CHANGE: " + msg.arg1);
                 switch (msg.arg1) {
-
                 case BluetoothChatService.STATE_CONNECTED:
-                    setTtileConnected();
-//                    mTitle.setText(R.string.title_connected_to);
-//                    mTitle.append(mConnectedDeviceName);
+                    setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
+
 //                    mConversationArrayAdapter.clear();
-                    break;
 
+                    break;
                 case BluetoothChatService.STATE_CONNECTING:
-                    setTtileConnecting();
-//                    mTitle.setText(R.string.title_connecting);
+                    setStatus(R.string.title_connecting);
                     break;
-
                 case BluetoothChatService.STATE_LISTEN:
                 case BluetoothChatService.STATE_NONE:
-                    setTtileNotConnected();
-//                    mTitle.setText(R.string.title_not_connected);
+                    setStatus(R.string.title_not_connected);
                     break;
-
                 }
                 break;
             case MESSAGE_WRITE:
-//                byte[] writeBuf = (byte[]) msg.obj;
-//                // construct a string from the buffer
-//                String writeMessage = new String(writeBuf);
+                byte[] writeBuf = (byte[]) msg.obj;
+                // construct a string from the buffer
+                String writeMessage = new String(writeBuf);
+
 //                mConversationArrayAdapter.add("Me:  " + writeMessage);
+
                 break;
 
             case MESSAGE_READ:
@@ -308,21 +307,6 @@ public class BluetoothChat extends Activity {
     };
 
     // added
-    protected void setTtileConnected() {
-        // dummy
-    }
-
-    // added
-    protected void setTtileConnecting() {
-        // dummy
-    }
-
-    // added
-    protected void setTtileNotConnected() {
-        // dummy
-    }
-
-    // added
     protected void execRead( Message msg ) {
         // dummy
     }
@@ -330,16 +314,16 @@ public class BluetoothChat extends Activity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(D) Log.d(TAG, "onActivityResult " + resultCode);
         switch (requestCode) {
-        case REQUEST_CONNECT_DEVICE:
+        case REQUEST_CONNECT_DEVICE_SECURE:
             // When DeviceListActivity returns with a device to connect
             if (resultCode == Activity.RESULT_OK) {
-                // Get the device MAC address
-                String address = data.getExtras()
-                                     .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-                // Get the BLuetoothDevice object
-                BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-                // Attempt to connect to the device
-                mChatService.connect(device);
+                connectDevice(data, true);
+            }
+            break;
+        case REQUEST_CONNECT_DEVICE_INSECURE:
+            // When DeviceListActivity returns with a device to connect
+            if (resultCode == Activity.RESULT_OK) {
+                connectDevice(data, false);
             }
             break;
         case REQUEST_ENABLE_BT:
@@ -348,12 +332,22 @@ public class BluetoothChat extends Activity {
                 // Bluetooth is now enabled, so set up a chat session
                 setupChat();
             } else {
-                // User did not enable Bluetooth or an error occured
+                // User did not enable Bluetooth or an error occurred
                 Log.d(TAG, "BT not enabled");
                 Toast.makeText(this, R.string.bt_not_enabled_leaving, Toast.LENGTH_SHORT).show();
                 finish();
             }
         }
+    }
+
+    private void connectDevice(Intent data, boolean secure) {
+        // Get the device MAC address
+        String address = data.getExtras()
+            .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+        // Get the BluetoothDevice object
+        BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+        // Attempt to connect to the device
+        mChatService.connect(device, secure);
     }
 
     @Override
@@ -365,11 +359,17 @@ public class BluetoothChat extends Activity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Intent serverIntent = null;
         switch (item.getItemId()) {
-        case R.id.scan:
+        case R.id.secure_connect_scan:
             // Launch the DeviceListActivity to see devices and do scan
-            Intent serverIntent = new Intent(this, DeviceListActivity.class);
-            startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
+            serverIntent = new Intent(this, DeviceListActivity.class);
+            startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_SECURE);
+            return true;
+        case R.id.insecure_connect_scan:
+            // Launch the DeviceListActivity to see devices and do scan
+            serverIntent = new Intent(this, DeviceListActivity.class);
+            startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_INSECURE);
             return true;
         case R.id.discoverable:
             // Ensure this device is discoverable by others
